@@ -1,0 +1,2 @@
+run:
+	gleam run
