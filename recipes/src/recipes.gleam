@@ -5,24 +5,30 @@ import gleam/int
 import gleam/map.{Map}
 
 pub type Name {
+  CarbonNanotube
   Coal
-  IronOre
-  IronInglot
-  CopperOre
   CopperInglot
-  Magnet
-  Gear
-  MagneticCoil
+  CopperOre
+  Diamond
   ElectricMotor
   ElectroMagneticTurbine
   EnergeticGraphite
-  Diamond
+  FireIce
+  Gear
+  Graphene
+  IronInglot
+  IronOre
+  Magnet
+  MagneticCoil
   ProliferatorMark1
   ProliferatorMark2
+  ProliferatorMark3
+  TitaniumInglot
+  TitaniumOre
 }
 
 type Recipe {
-  Recipe(name: Name, time: Float, needs: List(#(Int, Name)))
+  Recipe(name: Name, time: Float, makes: Int, needs: List(#(Int, Name)))
 }
 
 type NormalisedRecipe {
@@ -35,35 +41,58 @@ type NormalisedRecipe {
 }
 
 const recipes = [
-  Recipe(name: Coal, time: 1.0, needs: []),
-  Recipe(name: CopperOre, time: 1.0, needs: []),
-  Recipe(name: CopperInglot, time: 1.0, needs: [#(1, CopperOre)]),
-  Recipe(name: IronOre, time: 1.0, needs: []),
-  Recipe(name: IronInglot, time: 1.0, needs: [#(1, IronOre)]),
-  Recipe(name: Magnet, time: 1.5, needs: [#(1, IronOre)]),
-  Recipe(name: Gear, time: 1.0, needs: [#(1, IronInglot)]),
+  // Raw
+  Recipe(name: Coal, time: 1.0, makes: 1, needs: []),
+  Recipe(name: CopperOre, time: 1.0, makes: 1, needs: []),
+  Recipe(name: IronOre, time: 1.0, makes: 1, needs: []),
+  Recipe(name: FireIce, time: 1.0, makes: 1, needs: []),
+  Recipe(name: TitaniumOre, time: 1.0, makes: 1, needs: []),
+  // Inglots
+  Recipe(name: CopperInglot, time: 1.0, makes: 1, needs: [#(1, CopperOre)]),
+  Recipe(name: IronInglot, time: 1.0, makes: 1, needs: [#(1, IronOre)]),
+  Recipe(name: TitaniumInglot, time: 2.0, makes: 1, needs: [#(2, TitaniumOre)]),
+  //
+  Recipe(name: Magnet, time: 1.5, makes: 1, needs: [#(1, IronOre)]),
+  Recipe(name: Gear, time: 1.0, makes: 1, needs: [#(1, IronInglot)]),
   Recipe(
     name: MagneticCoil,
     time: 1.0,
+    makes: 1,
     needs: [#(2, Magnet), #(1, CopperInglot)],
   ),
   Recipe(
     name: ElectricMotor,
     time: 2.0,
+    makes: 1,
     needs: [#(2, IronInglot), #(1, Gear), #(1, MagneticCoil)],
   ),
   Recipe(
     name: ElectroMagneticTurbine,
     time: 2.0,
+    makes: 1,
     needs: [#(2, ElectricMotor), #(2, MagneticCoil)],
   ),
-  Recipe(name: EnergeticGraphite, time: 2.0, needs: [#(2, Coal)]),
-  Recipe(name: Diamond, time: 2.0, needs: [#(1, EnergeticGraphite)]),
-  Recipe(name: ProliferatorMark1, time: 0.5, needs: [#(1, Coal)]),
+  Recipe(name: EnergeticGraphite, time: 2.0, makes: 1, needs: [#(2, Coal)]),
+  Recipe(name: Diamond, time: 2.0, makes: 1, needs: [#(1, EnergeticGraphite)]),
+  Recipe(name: Graphene, time: 2.0, makes: 2, needs: [#(2, FireIce)]),
+  Recipe(
+    name: CarbonNanotube,
+    time: 4.0,
+    makes: 2,
+    needs: [#(3, Graphene), #(1, TitaniumInglot)],
+  ),
+  Recipe(name: ProliferatorMark1, time: 0.5, makes: 1, needs: [#(1, Coal)]),
   Recipe(
     name: ProliferatorMark2,
     time: 1.0,
+    makes: 1,
     needs: [#(2, ProliferatorMark1), #(1, Diamond)],
+  ),
+  Recipe(
+    name: ProliferatorMark3,
+    time: 2.0,
+    makes: 1,
+    needs: [#(2, ProliferatorMark2), #(1, CarbonNanotube)],
   ),
 ]
 
@@ -75,7 +104,7 @@ pub fn main() {
 
   // let needs = make(indexed, Magnet, 1.0)
   // let needs = make(indexed, ElectroMagneticTurbine, 1.0)
-  let needs = make(indexed, ProliferatorMark2, 1.0)
+  let needs = make(indexed, ProliferatorMark3, 2.0)
 
   let grouped = list.fold(over: needs, from: map.new(), with: fold_counts)
 
@@ -119,7 +148,7 @@ fn normalize_recipe_time(recipe: Recipe) -> NormalisedRecipe {
 
   NormalisedRecipe(
     name: recipe.name,
-    makes: multiplier,
+    makes: multiplier *. int.to_float(recipe.makes),
     time: 1.0,
     needs: next_needs,
   )
